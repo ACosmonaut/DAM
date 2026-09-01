@@ -87,7 +87,19 @@ iframe{
 
 <div id="grid" class="grid">
 
-  <!-- 1 - Amsterdam Dam Square -->
+  <!-- 1 - NUOVO LIVE - ALTO SINISTRA -->
+  <div class="tile">
+    <iframe 
+      src="https://www.youtube.com/embed/9Pm6Ji6tm7s?autoplay=1&mute=1&playsinline=1"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+    <div class="overlay">
+      Live 1 <span class="clock"></span>
+    </div>
+  </div>
+
+  <!-- 2 - Amsterdam Dam Square - ALTO DESTRA -->
   <div class="tile">
     <iframe 
       src="https://www.youtube.com/embed/Gd9d4q6WvUY?autoplay=1&mute=1&playsinline=1"
@@ -99,16 +111,6 @@ iframe{
     </div>
   </div>
 
-  <!-- 2 -->
-  <div class="tile">
-    <iframe 
-      src="https://www.youtube.com/embed/ZnOoxCd7BGU?autoplay=1&mute=1&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-    <div class="overlay">Live 2 <span class="clock"></span></div>
-  </div>
-
   <!-- 3 -->
   <div class="tile">
     <iframe 
@@ -116,7 +118,9 @@ iframe{
       allow="autoplay; encrypted-media; picture-in-picture"
       allowfullscreen>
     </iframe>
-    <div class="overlay">Live 3 <span class="clock"></span></div>
+    <div class="overlay">
+      Live 3 <span class="clock"></span>
+    </div>
   </div>
 
   <!-- 4 -->
@@ -126,7 +130,9 @@ iframe{
       allow="autoplay; encrypted-media; picture-in-picture"
       allowfullscreen>
     </iframe>
-    <div class="overlay">Live 4 <span class="clock"></span></div>
+    <div class="overlay">
+      Live 4 <span class="clock"></span>
+    </div>
   </div>
 
 </div>
@@ -140,11 +146,13 @@ function updateClock(){
     el.textContent = " " + time;
   });
 }
+
 setInterval(updateClock,1000);
 updateClock();
 
 /* ===== LAYOUT DINAMICO ===== */
 const grid=document.getElementById("grid");
+
 document.getElementById("layout").addEventListener("change",function(){
   const n=this.value;
   grid.style.gridTemplateColumns=`repeat(${n},1fr)`;
