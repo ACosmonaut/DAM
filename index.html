@@ -1,200 +1,279 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multi Live Grid</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amsterdam Live Webcams - 4K Multi View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:Arial, sans-serif;
-}
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
 
-.topbar{
-  position:fixed;
-  top:10px;
-  left:10px;
-  z-index:9999;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  background:rgba(0,0,0,.6);
-  padding:8px 12px;
-  border-radius:12px;
-}
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-select, button{
-  background:#111;
-  color:#fff;
-  border:1px solid #333;
-  border-radius:8px;
-  padding:6px 10px;
-  cursor:pointer;
-}
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #333;
+            z-index: 1000;
+        }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  grid-template-rows:repeat(2,1fr);
-  height:100vh;
-  gap:4px;
-}
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
 
-.tile{
-  position:relative;
-  background:#000;
-  overflow:hidden;
-}
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-iframe{
-  width:100%;
-  height:100%;
-  border:0;
-}
+        label {
+            font-size: 14px;
+            font-weight: 500;
+        }
 
-.overlay{
-  position:absolute;
-  bottom:8px;
-  left:8px;
-  background:rgba(0,0,0,.6);
-  padding:6px 10px;
-  border-radius:10px;
-  font-size:12px;
-}
+        select, button {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
 
-.tile.fullscreen{
-  position:fixed !important;
-  inset:0 !important;
-  width:100vw !important;
-  height:100vh !important;
-  z-index:9998 !important;
-}
-</style>
+        select:hover, button:hover {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+
+        select:active, button:active {
+            background: #333;
+        }
+
+        .grid-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 2px;
+            padding: 2px;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+
+        .grid-container.layout-3x3 {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+
+        .video-tile {
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .video-tile:hover {
+            filter: brightness(1.1);
+        }
+
+        .video-tile iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .clock {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #0f0;
+        }
+
+        .video-tile.fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .exit-fullscreen {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(200, 30, 30, 0.9);
+            color: #fff;
+            border: 2px solid #ff4444;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 10000;
+            display: none;
+            transition: all 0.2s;
+        }
+
+        .exit-fullscreen:hover {
+            background: rgba(220, 50, 50, 1);
+            transform: scale(1.05);
+        }
+
+        .exit-fullscreen.show {
+            display: block;
+        }
+    </style>
 </head>
-
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Amsterdam Live - Multi View</h1>
+            <div class="controls">
+                <label for="layout-select">Layout:</label>
+                <select id="layout-select">
+                    <option value="2x2">2×2 Grid</option>
+                    <option value="3x3">3×3 Grid</option>
+                </select>
+            </div>
+        </div>
 
-<div class="topbar">
-  <label>Layout:</label>
-  <select id="layout">
-    <option value="2">2×2</option>
-    <option value="3">3×3</option>
-  </select>
-  <button id="exitFs" style="display:none;">Esci Fullscreen</button>
-</div>
+        <div class="grid-container" id="grid">
+            <!-- Video 1 -->
+            <div class="video-tile" data-index="0">
+                <iframe src="https://www.youtube.com/embed/9Pm6Ji6tm7s?autoplay=1&mute=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                <div class="video-label">
+                    📍 Live 1 - <span class="clock"></span>
+                </div>
+            </div>
 
-<div id="grid" class="grid">
+            <!-- Video 2 -->
+            <div class="video-tile" data-index="1">
+                <iframe src="https://www.youtube.com/embed/Gd9d4q6WvUY?autoplay=1&mute=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                <div class="video-label">
+                    🌊 Dam Square - <span class="clock"></span>
+                </div>
+            </div>
 
-  <!-- 1 - NUOVO LIVE - ALTO SINISTRA -->
-  <div class="tile">
-    <iframe 
-      src="https://www.youtube.com/embed/9Pm6Ji6tm7s?autoplay=1&mute=1&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-    <div class="overlay">
-      Live 1 <span class="clock"></span>
+            <!-- Video 3 -->
+            <div class="video-tile" data-index="2">
+                <iframe src="https://www.youtube.com/embed/43qH0tDA6lM?autoplay=1&mute=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                <div class="video-label">
+                    🏛️ Live 3 - <span class="clock"></span>
+                </div>
+            </div>
+
+            <!-- Video 4 -->
+            <div class="video-tile" data-index="3">
+                <iframe src="https://www.youtube.com/embed/1phWWCgzXgM?autoplay=1&mute=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                <div class="video-label">
+                    🎬 Live 4 - <span class="clock"></span>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- 2 - Amsterdam Dam Square - ALTO DESTRA -->
-  <div class="tile">
-    <iframe 
-      src="https://www.youtube.com/embed/Gd9d4q6WvUY?autoplay=1&mute=1&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-    <div class="overlay">
-      Amsterdam - Dam Square <span class="clock"></span>
-    </div>
-  </div>
+    <button class="exit-fullscreen" id="exit-fs">✕ Exit Fullscreen</button>
 
-  <!-- 3 -->
-  <div class="tile">
-    <iframe 
-      src="https://www.youtube.com/embed/43qH0tDA6lM?autoplay=1&mute=1&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-    <div class="overlay">
-      Live 3 <span class="clock"></span>
-    </div>
-  </div>
+    <script>
+        // Update clock every second
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('it-IT');
+            document.querySelectorAll('.clock').forEach(el => {
+                el.textContent = timeStr;
+            });
+        }
 
-  <!-- 4 -->
-  <div class="tile">
-    <iframe 
-      src="https://www.youtube.com/embed/1phWWCgzXgM?autoplay=1&mute=1&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen>
-    </iframe>
-    <div class="overlay">
-      Live 4 <span class="clock"></span>
-    </div>
-  </div>
+        setInterval(updateClocks, 1000);
+        updateClocks();
 
-</div>
+        // Layout switching
+        const layoutSelect = document.getElementById('layout-select');
+        const grid = document.getElementById('grid');
 
-<script>
-/* ===== OROLOGIO ===== */
-function updateClock(){
-  const now = new Date();
-  const time = now.toLocaleTimeString();
-  document.querySelectorAll(".clock").forEach(el=>{
-    el.textContent = " " + time;
-  });
-}
+        layoutSelect.addEventListener('change', (e) => {
+            grid.classList.remove('layout-3x3');
+            if (e.target.value === '3x3') {
+                grid.classList.add('layout-3x3');
+            }
+        });
 
-setInterval(updateClock,1000);
-updateClock();
+        // Fullscreen functionality
+        const tiles = document.querySelectorAll('.video-tile');
+        const exitBtn = document.getElementById('exit-fs');
+        let fullscreenTile = null;
 
-/* ===== LAYOUT DINAMICO ===== */
-const grid=document.getElementById("grid");
+        tiles.forEach(tile => {
+            tile.addEventListener('dblclick', () => {
+                if (fullscreenTile) {
+                    fullscreenTile.classList.remove('fullscreen');
+                    exitBtn.classList.remove('show');
+                    fullscreenTile = null;
+                } else {
+                    tile.classList.add('fullscreen');
+                    exitBtn.classList.add('show');
+                    fullscreenTile = tile;
+                }
+            });
+        });
 
-document.getElementById("layout").addEventListener("change",function(){
-  const n=this.value;
-  grid.style.gridTemplateColumns=`repeat(${n},1fr)`;
-  grid.style.gridTemplateRows=`repeat(${n},1fr)`;
-});
+        exitBtn.addEventListener('click', () => {
+            if (fullscreenTile) {
+                fullscreenTile.classList.remove('fullscreen');
+                exitBtn.classList.remove('show');
+                fullscreenTile = null;
+            }
+        });
 
-/* ===== FULLSCREEN ===== */
-let fsTile=null;
-const exitBtn=document.getElementById("exitFs");
-
-document.querySelectorAll(".tile").forEach(tile=>{
-  tile.addEventListener("dblclick",()=>{
-    if(tile.classList.contains("fullscreen")){
-      tile.classList.remove("fullscreen");
-      exitBtn.style.display="none";
-      fsTile=null;
-    } else {
-      document.querySelectorAll(".tile").forEach(t=>t.classList.remove("fullscreen"));
-      tile.classList.add("fullscreen");
-      exitBtn.style.display="inline-block";
-      fsTile=tile;
-    }
-  });
-});
-
-exitBtn.addEventListener("click",()=>{
-  if(fsTile){
-    fsTile.classList.remove("fullscreen");
-    exitBtn.style.display="none";
-    fsTile=null;
-  }
-});
-
-document.addEventListener("keydown",(e)=>{
-  if(e.key==="Escape" && fsTile){
-    fsTile.classList.remove("fullscreen");
-    exitBtn.style.display="none";
-    fsTile=null;
-  }
-});
-</script>
-
+        // Escape key to exit fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && fullscreenTile) {
+                fullscreenTile.classList.remove('fullscreen');
+                exitBtn.classList.remove('show');
+                fullscreenTile = null;
+            }
+        });
+    </script>
 </body>
 </html>
